@@ -300,21 +300,15 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv) {
     ServiceStatus.dwCheckPoint = 0;
     ServiceStatus.dwWaitHint = 0;
     ServiceStatusHandle = RegisterServiceCtrlHandler(TEXT("SudoService"), ServiceControlHandler);
+    GetModuleFileName(NULL, ProgramDirectory, MAX_PATH);
+    _tcsrchr(ProgramDirectory, TEXT('\\'))[1] = '\0';
 
     // Open the log file.
     {
         TCHAR logFile[MAX_PATH + 1] = {TEXT('\0')};
         TCHAR tempDirectory[MAX_PATH + 1] = {TEXT('\0')};
 
-        GetEnvironmentVariable(TEXT("TEMP"), tempDirectory, MAX_PATH); // Get the path of the temporary directory.
-
-        if (_taccess(tempDirectory, 0) == -1) {
-            if (!CreateDirectory(tempDirectory, NULL)) {
-                return;
-            }
-        }
-
-        _tcscat_s(logFile, MAX_PATH, tempDirectory);
+        _tcscat_s(logFile, MAX_PATH, ProgramDirectory);
         _tcscat_s(logFile, MAX_PATH, TEXT("\\SudoService.log"));
 
         if (_waccess(logFile, 0) == -1) {
@@ -369,9 +363,6 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv) {
     SetServiceStatus(ServiceStatusHandle, &ServiceStatus);
 
     WriteLog(TEXT("Sudo for Windows Service started."), LOG_MESSAGE_INFO);
-
-    GetModuleFileName(NULL, ProgramDirectory, MAX_PATH);
-    _tcsrchr(ProgramDirectory, TEXT('\\'))[1] = '\0';
 
     ServiceStatus.dwWin32ExitCode = ServiceRun();
 
